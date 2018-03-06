@@ -1,6 +1,4 @@
-/**
- * Created by Anton on 04.03.2018.
- */
+
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.InputStream;
@@ -10,10 +8,10 @@ import java.io.BufferedReader;
 public class Main {
 
     public static void main(String[] args) throws Throwable {
-        ServerSocket ss = new ServerSocket(8080);
+        ServerSocket serverSocket = new ServerSocket(1456);
         while (true) {
-            Socket s = ss.accept();
-            System.err.println("Client accepted");
+            Socket s = serverSocket.accept();
+            System.out.println("Client accepted");
             new Thread(new SocketProcessor(s)).start();
         }
     }
@@ -23,15 +21,17 @@ public class Main {
         private InputStream is;
         private OutputStream os;
 
-        private SocketProcessor(Socket s) throws Throwable {
-            this.s = s;
-            this.is = s.getInputStream();
-            this.os = s.getOutputStream();
-        }
+
+         private SocketProcessor(Socket s) throws Throwable {
+              this.s = s;
+              this.is = s.getInputStream();
+              this.os = s.getOutputStream();
+          }
         public void run() {
             try {
                 readInputHeaders();
-                writeResponse("<html><body><h1>Works</h1></body></html>");
+                String a = "Works";
+                writeResponse(a);
             } catch (Throwable t) {
 
             } finally {
@@ -41,20 +41,21 @@ public class Main {
 
                 }
             }
-            System.err.println("Client processing finished");
+            System.out.println("Client processing finished");
         }
 
         private void writeResponse(String s) throws Throwable {
-            String response = "HTTP/1.0 200 OK\r\n" +
+
+            System.out.println ("HTTP/1.0 200 OK\r\n" +
+                    "User-Agent: Mozilla/58.0.2\r\n"+
+                    "Server: MyServer\r\n" +
                     "Content-Type: text/html\r\n" +
                     "Content-Length: " + s.length() + "\r\n" +
-                    "Connection: close\r\n\r\n";
-            String result = response + s;
-            os.write(result.getBytes());
+                    "Connection: keep-alive\r\n\r\n");
+            os.write(s.getBytes());
             os.flush();
         }
-
-        private void readInputHeaders() throws Throwable {
+       private void readInputHeaders() throws Throwable {
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
             while(true) {
                 String s = br.readLine();
