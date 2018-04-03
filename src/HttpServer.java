@@ -17,6 +17,7 @@ public class HttpServer  {
             Socket s = serverSocket.accept();
             System.out.println("Client accepted");
             Thread thread = new Thread(new SocketProcessor(s));
+            String d= "S";
             thread.start();
 
         }
