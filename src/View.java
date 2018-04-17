@@ -7,7 +7,7 @@ import javafx.stage.Stage;
  * Created by Anton on 03.04.2018.
  */
 public class View {
-    public void view(String s){
+    public static void view(String s) throws Throwable {
         Pane pane = new Pane();
         Stage stage = new Stage();
         TextField textField = new TextField();
@@ -16,5 +16,8 @@ public class View {
         Scene scene = new Scene(pane,800,600);
         stage.setScene(scene);
         stage.show();
+        TextField textField1 = new TextField();
+        HttpServer server1 = new HttpServer();
+        server1.server();
     }
 }

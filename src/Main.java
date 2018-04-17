@@ -12,6 +12,7 @@ public class Main extends Application {
             throwable.printStackTrace();
         }
 
+
     }
 
     public static void main(String[] args){launch(args);}
