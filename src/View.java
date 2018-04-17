@@ -16,7 +16,7 @@ public class View {
         Scene scene = new Scene(pane,800,600);
         stage.setScene(scene);
         stage.show();
-        TextField textField1 = new TextField();
+       // TextField textField1 = new TextField();
         HttpServer server1 = new HttpServer();
         server1.server();
     }
