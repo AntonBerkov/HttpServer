@@ -7,14 +7,44 @@ import java.util.Date;
 public class HttpServer  {
 
     public void server() throws Throwable{
-        ServerSocket serverSocket = new ServerSocket(1456);
 
-      while (true) {
-            Socket s = serverSocket.accept();
-            System.out.println("Client accepted");
-            Thread thread = new Thread(new SocketProcessor(s));
-            thread.start();
-        }
+        ServerSocket serverSocket = new ServerSocket(1456);
+        Thread thread0 = new Thread(()->{
+           while (true){
+               Socket s = null;
+               try {
+                   s = serverSocket.accept();
+               } catch (IOException e) {
+                   e.printStackTrace();
+               }
+               System.out.println("Client accepted");
+               Thread thread = null;
+               try {
+                   thread = new Thread(new SocketProcessor(s));
+               } catch (Throwable throwable) {
+                   throwable.printStackTrace();
+               }
+               assert thread != null;
+               thread.start();
+           }
+        });
+        thread0.start();
+   /*   while (true) {
+          try {
+              Socket s = serverSocket.accept();
+              System.out.println("Client accepted");
+              Thread thread = new Thread(new SocketProcessor(s));
+              thread.start();
+            //  thread.sleep(20000);
+
+          }
+            catch (IOException e){
+                System.out.println("Failed to establish connection.");
+                System.out.println(e.getMessage());
+                System.exit(-1);
+            }
+        }*/
+
     }
 
     private static class SocketProcessor implements Runnable {
@@ -30,6 +60,7 @@ public class HttpServer  {
             this.is = s.getInputStream();
             this.os = s.getOutputStream();
         }
+
         public void run() {
             try {
                 String header= readInputHeaders();
@@ -40,7 +71,6 @@ public class HttpServer  {
 
 
             } catch (Throwable t) {
-
 
             } finally {
                 try {
@@ -53,6 +83,7 @@ public class HttpServer  {
 
             System.out.println("Client processing finished");
         }
+
         private int send(String url) throws IOException {
             InputStream strm = HttpServer.class.getResourceAsStream(url);
             int code = (strm != null) ? 200 : 404;
@@ -64,11 +95,13 @@ public class HttpServer  {
                 byte[] buffer = new byte[1024];
                 while((count = strm.read(buffer)) != -1) {
                     os.write(buffer, 0, count);
+                    os.flush();
                 }
                 strm.close();
             }
             return code;
         }
+
         private String getHeader(int code) {
             String contentType = "text/html";
             String a = null;
@@ -80,8 +113,8 @@ public class HttpServer  {
             buffer.append("\n");
             a=buffer.toString();
             return a;
-
         }
+
         private String getAnswer(int code) {
             switch (code) {
                 case 200: {
@@ -93,7 +126,6 @@ public class HttpServer  {
                     System.out.println("404 Not Found");
                     return "Not Found";
                 }
-
                 default:
                     return "Internal Server Error";
             }
@@ -102,10 +134,9 @@ public class HttpServer  {
         private void writeResponse(String s) throws Throwable {
             String a =s+"\r\n";
             System.out.println(a);
-            //os.write(a.getBytes());
+           // os.write(a.getBytes());
             os.flush();
         }
-
 
         private String getURIFromHeader(String header) {
             int from = header.indexOf(" ") + 1;
@@ -134,10 +165,8 @@ public class HttpServer  {
                 }
 
             }
-           String response = "Content-Type: text/html\r\n";
-
+           String response = "Content-Type: text/html\r\n"+"Date: " + new Date().toString() + "\r\n";
            writeResponse(response);
-
            return builder.toString();
        }
     }
