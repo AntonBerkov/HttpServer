@@ -1,3 +1,5 @@
+import javafx.application.Platform;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -9,6 +11,7 @@ public class HttpServer  {
     public void server() throws Throwable{
 
         ServerSocket serverSocket = new ServerSocket(1456);
+
         Thread thread0 = new Thread(()->{
            while (true){
                Socket s = null;
@@ -18,6 +21,8 @@ public class HttpServer  {
                    e.printStackTrace();
                }
                System.out.println("Client accepted");
+               String info = "Client accepted";
+             //  add.addInfo(info);
                Thread thread = null;
                try {
                    thread = new Thread(new SocketProcessor(s));
@@ -29,21 +34,6 @@ public class HttpServer  {
            }
         });
         thread0.start();
-   /*   while (true) {
-          try {
-              Socket s = serverSocket.accept();
-              System.out.println("Client accepted");
-              Thread thread = new Thread(new SocketProcessor(s));
-              thread.start();
-            //  thread.sleep(20000);
-
-          }
-            catch (IOException e){
-                System.out.println("Failed to establish connection.");
-                System.out.println(e.getMessage());
-                System.exit(-1);
-            }
-        }*/
 
     }
 
@@ -53,6 +43,8 @@ public class HttpServer  {
         private InputStream is;
         private OutputStream os;
         private static final String dir = "/path";
+        String info ="Client accepted"+"\r\n";
+
 
 
         private SocketProcessor(Socket s) throws Throwable {
@@ -66,6 +58,7 @@ public class HttpServer  {
                 String header= readInputHeaders();
                 String url = getURIFromHeader(header);
                 System.out.println("Resource: " + url + "\n");
+                info = info +"Resource: "+ url +"\r\n";
                 send(url);
                 String a = url+"\r\n"+"Content-Length: " + url.length() + "\r\n";
 
@@ -82,6 +75,16 @@ public class HttpServer  {
             }
 
             System.out.println("Client processing finished");
+            info = info +"Client processing finished"+"\r\n";
+            sendInfo(info);
+        }
+
+        public void sendInfo(String info){
+            Platform.runLater(()->{
+                View add = new View();
+                add.addInfo(info);
+            });
+
         }
 
         private int send(String url) throws IOException {
@@ -119,11 +122,13 @@ public class HttpServer  {
             switch (code) {
                 case 200: {
                     System.out.println("200 OK");
+                    info = info+"\r\n"+"200 OK"+"\r\n";
                     return "OK";
                 }
                 case 404:
                 {
                     System.out.println("404 Not Found");
+                    info = info +"\r\n"+"404 Not Found"+"\r\n";
                     return "Not Found";
                 }
                 default:
@@ -134,8 +139,9 @@ public class HttpServer  {
         private void writeResponse(String s) throws Throwable {
             String a =s+"\r\n";
             System.out.println(a);
+            info = info+"\r\n"+a+"\r\n";
            // os.write(a.getBytes());
-            os.flush();
+          //  os.flush();
         }
 
         private String getURIFromHeader(String header) {
