@@ -1,6 +1,7 @@
 import javafx.application.Platform;
 
 import java.io.*;
+
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Date;
@@ -47,6 +48,8 @@ public class HttpServer  {
 
 
 
+
+
         private SocketProcessor(Socket s) throws Throwable {
             this.s = s;
             this.is = s.getInputStream();
@@ -56,12 +59,15 @@ public class HttpServer  {
         public void run() {
             try {
                 String header= readInputHeaders();
+
                 String url = getURIFromHeader(header);
+
                 System.out.println("Resource: " + url + "\n");
                 info = info +"Resource: "+ url +"\r\n";
-                send(url);
-                String a = url+"\r\n"+"Content-Length: " + url.length() + "\r\n";
-
+               int code = send(url);
+                System.out.println("Result code: " + code + "\n");
+                String a = "Content-Length: " + url.length() + "\r\n";
+                 System.out.println(a);
 
             } catch (Throwable t) {
 
@@ -87,9 +93,37 @@ public class HttpServer  {
 
         }
 
-        private int send(String url) throws IOException {
+        private int send( String url) throws IOException {
             InputStream strm = HttpServer.class.getResourceAsStream(url);
+
             int code = (strm != null) ? 200 : 404;
+
+            if(url.length()== 0){code = 411;}
+            else {
+                if (url.contains("forbidden")) {
+                    code = 403;
+                } else {
+                    if (url.contains("unathorized")) {
+                        code = 401;
+                    }
+                    else {
+                    if(url.contains("illegal")){code = 451;}
+                    else {
+                        if (info.contains("PUT")) {code = 405;}
+                        else {
+                            if (info.contains("COPY")) {code = 501;}
+                            else {
+                                if (url.length() != 16) {
+                                    code = 400;
+                                }
+                            }
+                            }
+                        }
+
+                    }
+                }
+            }
+
             String header = getHeader(code);
             PrintStream answer = new PrintStream(os, true, "UTF-8");
             answer.print(header);
@@ -106,6 +140,7 @@ public class HttpServer  {
         }
 
         private String getHeader(int code) {
+
             String contentType = "text/html";
             String a = null;
             StringBuilder buffer = new StringBuilder();
@@ -115,6 +150,8 @@ public class HttpServer  {
             buffer.append("Content-Type: " + contentType + "\n");
             buffer.append("\n");
             a=buffer.toString();
+            System.out.println(a);
+            info = info+"\r\n"+a+"\r\n";
             return a;
         }
 
@@ -122,26 +159,66 @@ public class HttpServer  {
             switch (code) {
                 case 200: {
                     System.out.println("200 OK");
-                    info = info+"\r\n"+"200 OK"+"\r\n";
+
                     return "OK";
+                }
+                case 401:
+                {
+                    System.out.println("401 Unathorized");
+                    return "Unathorized";
+                }
+                case 451:
+                {
+                    System.out.println("451 Unavailable For Legal Reasons");
+                    return "Unavailable For Legal Reasons";
                 }
                 case 404:
                 {
                     System.out.println("404 Not Found");
-                    info = info +"\r\n"+"404 Not Found"+"\r\n";
                     return "Not Found";
                 }
+
+                case 405:
+                {
+                    System.out.println("405 Method Not Allowed");
+                    return "Method Not Allowed";
+                }
+                case 403:
+                {
+                    System.out.println("404 Forbidden");
+                    return "Forbidden";
+                }
+
+                case 411:
+                {
+                    System.out.println("411 Length Required");
+                    return "Length Required";
+                }
+
+                case 501:
+                {
+                    System.out.println("501 Not Implemented");
+                    return "Not Implemented";
+                }
+
+                case 400:
+                {
+                    System.out.println("Bad request");
+                    return "Bad request";
+                }
+
                 default:
                     return "Internal Server Error";
             }
+
+
 
         }
         private void writeResponse(String s) throws Throwable {
             String a =s+"\r\n";
             System.out.println(a);
             info = info+"\r\n"+a+"\r\n";
-           // os.write(a.getBytes());
-          //  os.flush();
+
         }
 
         private String getURIFromHeader(String header) {
@@ -171,8 +248,6 @@ public class HttpServer  {
                 }
 
             }
-           String response = "Content-Type: text/html\r\n"+"Date: " + new Date().toString() + "\r\n";
-           writeResponse(response);
            return builder.toString();
        }
     }
