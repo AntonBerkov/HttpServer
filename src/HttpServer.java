@@ -41,10 +41,10 @@ public class HttpServer  {
     private static class SocketProcessor implements Runnable {
 
         private Socket s;
-        private InputStream is;
-        private OutputStream os;
-        private static final String dir = "/path";
-        String info ="Client accepted"+"\r\n";
+        public InputStream is;
+        public OutputStream os;
+        public static final String dir = "/path";
+        public String info ="Client accepted"+"\r\n";
 
 
 
@@ -58,6 +58,7 @@ public class HttpServer  {
 
         public void run() {
             try {
+
                 String header= readInputHeaders();
 
                 String url = getURIFromHeader(header);
@@ -93,36 +94,12 @@ public class HttpServer  {
 
         }
 
-        private int send( String url) throws IOException {
+        public int send(String url) throws IOException {
             InputStream strm = HttpServer.class.getResourceAsStream(url);
-
-            int code = (strm != null) ? 200 : 404;
-
-            if(url.length()== 0){code = 411;}
-            else {
-                if (url.contains("forbidden")) {
-                    code = 403;
-                } else {
-                    if (url.contains("unathorized")) {
-                        code = 401;
-                    }
-                    else {
-                    if(url.contains("illegal")){code = 451;}
-                    else {
-                        if (info.contains("PUT")) {code = 405;}
-                        else {
-                            if (info.contains("COPY")) {code = 501;}
-                            else {
-                                if (url.length() != 16) {
-                                    code = 400;
-                                }
-                            }
-                            }
-                        }
-
-                    }
-                }
-            }
+            int code = 0;
+            String a = info;
+            GetCode code1 = new GetCode();
+            code=code1.getCode(code,strm,a,url);
 
             String header = getHeader(code);
             PrintStream answer = new PrintStream(os, true, "UTF-8");
@@ -143,8 +120,9 @@ public class HttpServer  {
 
             String contentType = "text/html";
             String a = null;
+            GetAnswer answer = new GetAnswer();
             StringBuilder buffer = new StringBuilder();
-            buffer.append("HTTP/1.1 " + code + " " + getAnswer(code) + "\n");
+            buffer.append("HTTP/1.1 " + code + " " + answer.getAnswer(code) + "\n");
             buffer.append("Date: " + new Date().toString() + "\n");
             buffer.append("Accept-Ranges: none\n");
             buffer.append("Content-Type: " + contentType + "\n");
@@ -155,65 +133,7 @@ public class HttpServer  {
             return a;
         }
 
-        private String getAnswer(int code) {
-            switch (code) {
-                case 200: {
-                    System.out.println("200 OK");
 
-                    return "OK";
-                }
-                case 401:
-                {
-                    System.out.println("401 Unathorized");
-                    return "Unathorized";
-                }
-                case 451:
-                {
-                    System.out.println("451 Unavailable For Legal Reasons");
-                    return "Unavailable For Legal Reasons";
-                }
-                case 404:
-                {
-                    System.out.println("404 Not Found");
-                    return "Not Found";
-                }
-
-                case 405:
-                {
-                    System.out.println("405 Method Not Allowed");
-                    return "Method Not Allowed";
-                }
-                case 403:
-                {
-                    System.out.println("404 Forbidden");
-                    return "Forbidden";
-                }
-
-                case 411:
-                {
-                    System.out.println("411 Length Required");
-                    return "Length Required";
-                }
-
-                case 501:
-                {
-                    System.out.println("501 Not Implemented");
-                    return "Not Implemented";
-                }
-
-                case 400:
-                {
-                    System.out.println("Bad request");
-                    return "Bad request";
-                }
-
-                default:
-                    return "Internal Server Error";
-            }
-
-
-
-        }
         private void writeResponse(String s) throws Throwable {
             String a =s+"\r\n";
             System.out.println(a);
@@ -221,7 +141,7 @@ public class HttpServer  {
 
         }
 
-        private String getURIFromHeader(String header) {
+        public String getURIFromHeader( String header) {
             int from = header.indexOf(" ") + 1;
             int to = header.indexOf(" ", from);
             String uri = header.substring(from, to);
@@ -232,11 +152,11 @@ public class HttpServer  {
             return dir+ uri;
         }
 
-       private String readInputHeaders() throws Throwable {
+        public String readInputHeaders() throws Throwable {
 
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
-           String s;
-           StringBuilder builder = new StringBuilder();
+            String s;
+            StringBuilder builder = new StringBuilder();
 
             while(true) {
                 s=br.readLine();
@@ -248,7 +168,9 @@ public class HttpServer  {
                 }
 
             }
-           return builder.toString();
-       }
+            return builder.toString();
+        }
+
+
     }
 }
